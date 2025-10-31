@@ -117,6 +117,7 @@ def update_orders():
                             orders[str(token)][type]['price'] = float(curr.iloc[0]['price'])
                             orders[str(token)][type]['size'] = float(curr.iloc[0]['original_size'] - curr.iloc[0]['size_matched'])
 
+    print("Updated orders from API:", orders)
     global_state.orders = orders
 
 def get_order(token):
@@ -131,7 +132,10 @@ def get_order(token):
 
         return global_state.orders[token]
     else:
-        return {'buy': {'price': 0, 'size': 0}, 'sell': {'price': 0, 'size': 0}}
+        global_state.orders[token] = {'buy': {'price': 0, 'size': 0}, 'sell': {'price': 0, 'size': 0}}
+
+    print("get_order(token):", token, global_state.orders[token])
+    return global_state.orders[token]
     
 def set_order(token, side, size, price):
     curr = {}
@@ -147,10 +151,12 @@ def set_order(token, side, size, price):
 
 def update_markets():
     received_df, received_params = get_sheet_df()
+    # print("Length of received_df", len(received_df))
 
     if len(received_df) > 0:
         global_state.df, global_state.params = received_df.copy(), received_params
     
+    # print("Length of global_state", len(global_state.df))
 
     for _, row in global_state.df.iterrows():
         for col in ['token1', 'token2']:

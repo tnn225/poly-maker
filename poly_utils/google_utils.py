@@ -19,12 +19,13 @@ def get_spreadsheet(read_only=False):
         Spreadsheet object or ReadOnlySpreadsheet wrapper for read-only mode
     """
     spreadsheet_url = os.getenv("SPREADSHEET_URL")
+    # print("spreadsheet_url=", spreadsheet_url)
     if not spreadsheet_url:
         raise ValueError("SPREADSHEET_URL environment variable is not set")
     
     # Check for credentials
     creds_file = 'credentials.json' if os.path.exists('credentials.json') else '../credentials.json'
-    
+    # print("creds_file=", creds_file)
     if not os.path.exists(creds_file):
         if read_only:
             return ReadOnlySpreadsheet(spreadsheet_url)

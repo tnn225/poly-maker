@@ -150,6 +150,8 @@ def round_up(number, decimals):
     return math.ceil(number * factor) / factor
 
 def get_buy_sell_amount(position, bid_price, row, other_token_position=0):
+    print("Calculating buy/sell amounts. Current position:", position, "Other token position:", other_token_position, "Bid price:", bid_price, "Row data:", row)
+    
     buy_amount = 0
     sell_amount = 0
 

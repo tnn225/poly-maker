@@ -3,8 +3,10 @@ import os                           # Operating system interface
 
 # Polymarket API client libraries
 from py_clob_client.client import ClobClient
-from py_clob_client.clob_types import OrderArgs, BalanceAllowanceParams, AssetType, PartialCreateOrderOptions
+from py_clob_client.clob_types import OrderArgs, OrderType, BalanceAllowanceParams, AssetType, PartialCreateOrderOptions
 from py_clob_client.constants import POLYGON
+
+from py_clob_client.order_builder.constants import BUY, SELL
 
 # Web3 libraries for blockchain interaction
 from web3 import Web3
@@ -49,12 +51,14 @@ class PolymarketClient:
 
         # Get credentials from environment variables
         key=os.getenv("PK")
+        print("Using API key:", key)
         browser_address = os.getenv("BROWSER_ADDRESS")
+        print("Using browser address:", browser_address)
 
         # Don't print sensitive wallet information
         print("Initializing Polymarket client...")
         chain_id=POLYGON
-        self.browser_wallet=Web3.toChecksumAddress(browser_address)
+        self.browser_wallet=Web3.to_checksum_address(browser_address)
 
         # Initialize the Polymarket API client
         self.client = ClobClient(
@@ -62,7 +66,7 @@ class PolymarketClient:
             key=key,
             chain_id=chain_id,
             funder=self.browser_wallet,
-            signature_type=2
+            signature_type=1
         )
 
         # Set up API credentials
@@ -116,10 +120,10 @@ class PolymarketClient:
         """
         # Create order parameters
         order_args = OrderArgs(
-            token_id=str(marketId),
             price=price,
             size=size,
-            side=action
+            side=BUY if action.upper() == "BUY" else SELL,
+            token_id=str(marketId),
         )
 
         signed_order = None
@@ -131,8 +135,9 @@ class PolymarketClient:
             signed_order = self.client.create_order(order_args, options=PartialCreateOrderOptions(neg_risk=True))
             
         try:
+            print("Submitting order:", signed_order)
             # Submit the signed order to the API
-            resp = self.client.post_order(signed_order)
+            resp = self.client.post_order(signed_order, OrderType.GTC)
             return resp
         except Exception as ex:
             print(ex)

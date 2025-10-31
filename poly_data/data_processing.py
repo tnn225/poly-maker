@@ -8,6 +8,14 @@ import time
 import asyncio
 from poly_data.data_utils import set_position, set_order, update_positions
 
+def is_json(myjson):
+  try:
+    json.loads(myjson)
+  except ValueError as e:
+    return False
+  return True
+
+
 def process_book_data(asset, json_data):
     global_state.all_data[asset] = {
         'bids': SortedDict(),
@@ -30,8 +38,12 @@ def process_price_change(asset, side, price_level, new_size):
         book[price_level] = new_size
 
 def process_data(json_datas, trade=True):
+    # print("Processing data...", json_datas)
+    if not isinstance(json_datas, list):
+        json_datas = [json_datas]
 
     for json_data in json_datas:
+        print("json_data", json_data)
         event_type = json_data['event_type']
         asset = json_data['market']
 
@@ -42,7 +54,7 @@ def process_data(json_datas, trade=True):
                 asyncio.create_task(perform_trade(asset))
                 
         elif event_type == 'price_change':
-            for data in json_data['changes']:
+            for data in json_data['price_changes']:
                 side = 'bids' if data['side'] == 'BUY' else 'asks'
                 price_level = float(data['price'])
                 new_size = float(data['size'])

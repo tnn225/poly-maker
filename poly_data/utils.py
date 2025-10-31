@@ -32,10 +32,12 @@ def get_sheet_df(read_only=None):
     wk = spreadsheet.worksheet(sel)
     df = pd.DataFrame(wk.get_all_records())
     df = df[df['question'] != ""].reset_index(drop=True)
+    # print(df.head)
 
     wk2 = spreadsheet.worksheet(all)
     df2 = pd.DataFrame(wk2.get_all_records())
     df2 = df2[df2['question'] != ""].reset_index(drop=True)
+    # print(df2.head)
 
     result = df.merge(df2, on='question', how='inner')
 
