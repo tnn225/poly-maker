@@ -87,11 +87,13 @@ def fetch_and_process_data():
     sel_df = get_sel_df(spreadsheet, "Selected Markets")
 
 
-    all_df = get_all_markets(client)
-    print("Got all Markets")
+    all_df = get_all_markets(client, slug='lol-t1-tes-2025-11-02')
+    print("Got all Markets", len(all_df))
+    print(all_df)
     all_results = get_all_results(all_df, client)
-    print("Got all Results")
-    m_data, all_markets = get_markets(all_results, sel_df, maker_reward=0.75)
+    print("Got all Results", len(all_results))
+    print(all_results)
+    m_data, all_markets = get_markets(all_results, sel_df, maker_reward=0) # maker_reward = 0 for taker markets
     print("Got all orderbook")
 
     print(f'{pd.to_datetime("now")}: Fetched all markets data of length {len(all_markets)}.')
@@ -116,7 +118,7 @@ def fetch_and_process_data():
 
     print(f'{pd.to_datetime("now")}: Fetched select market of length {len(new_df)}.')
 
-    if len(new_df) > 50:
+    if len(new_df) > 0:
         update_sheet(new_df, wk_all)
         update_sheet(volatility_df, wk_vol)
         update_sheet(m_data, wk_full)

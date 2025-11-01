@@ -29,6 +29,7 @@ def send_buy_order(order):
     Args:
         order (dict): Order details including token, price, size, and market parameters
     """
+    print("send_buy_order called with order:", order)
     client = global_state.client
 
     # Only cancel existing orders if we need to make significant changes
@@ -90,6 +91,7 @@ def send_sell_order(order):
     Args:
         order (dict): Order details including token, price, size, and market parameters
     """
+    print("send_sell_order called with order:", order)
     client = global_state.client
 
     # Only cancel existing orders if we need to make significant changes

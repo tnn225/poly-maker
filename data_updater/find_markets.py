@@ -19,28 +19,66 @@ def get_sel_df(spreadsheet, sheet_name='Selected Markets'):
     except:
         return pd.DataFrame()
     
-def get_all_markets(client):
+def get_all_markets(client, slug=None, limit=1000):
     cursor = ""
     all_markets = []
 
-    while True:
-        try:
-            markets = client.get_sampling_markets(next_cursor = cursor)
-            markets_df = pd.DataFrame(markets['data'])
+    condition_ids = [
+        '0xc699baaa01bf53dc25d2efa47dd7b459125d3148c49a50b7abaab0790f4a2392',
+        '0x31243f7023a35caf3eed210e640b8a1100b5fe7bd411965e1550415b6068b6c9',
+        '0xa04ae40d7f80c5d3f0f248ffd82dcc522fd311366907338a901440cc0c50f12f',
+        '0xf74c0ae5fbf387d8bdce13d8c4a7ab27718c2329282ab5262da193c5ac9071de'
+    ]
+
+    markets = []
+    for id in condition_ids:
+        market = client.get_market(id)
+        markets.append(market)
+        print(market)
+
+    all_df = pd.DataFrame(markets)
+    print(all_df)
+
+    # client.get_market("condition_id") 
 
 
-            cursor = markets['next_cursor']
+    # while True:
+    #     try:
+    #         for cid in condition_ids:
+    #             print(f'Fetching markets for condition_id: {cid}')
+
+    #             markets = client.get_markets(next_cursor = cursor)
+    #         cursor = markets['next_cursor']
+
+    #         if 'data' in markets:
+    #             print(markets['data'][0])
             
+    #         markets_df = pd.DataFrame(markets['data'])
+    #         markets_df = markets_df[markets_df['closed'] == False] 
 
+    #         print(f'Fetched {len(markets_df)} markets')
+    #         print(markets_df.loc[[0]])           
 
-            all_markets.append(markets_df)
+    #         print(slug)
+    #         if slug is not None:
+    #             markets_df = markets_df[markets_df['market_slug'] == slug] 
+    #         print(f'Fetched {len(markets_df)} markets after slug filter\n')
 
-            if cursor is None:
-                break
-        except:
-            break
+    #         if len(markets_df) > 0:
+    #             all_markets.append(markets_df)
+    #         # if len(all_markets) > limit:
+    #         #    break
 
-    all_df = pd.concat(all_markets)
+    #         if cursor is None:
+    #             print(f'cursor is None\n')
+    #             break
+    #     except:
+    #         break
+
+    # pd.DataFrame(markets['data']) 
+
+    # print(f'Fetched {len(all_markets)} markets after slug filter\n')
+
     all_df = all_df.reset_index(drop=True)
 
     return all_df
@@ -113,6 +151,7 @@ def add_formula_params(curr_df, midpoint, v, daily_reward):
     return curr_df
 
 def process_single_row(row, client):
+    print('process_single_row', row)
     ret = {}
     ret['question'] = row['question']
     ret['neg_risk'] = row['neg_risk']
@@ -127,10 +166,11 @@ def process_single_row(row, client):
     token2 = row['tokens'][1]['token_id']
 
     rate = 0
-    for rate_info in row['rewards']['rates']:
-        if rate_info['asset_address'].lower() == '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'.lower():
-            rate = rate_info['rewards_daily_rate']
-            break
+    if 'rates' in row['rewards'] and row['rewards']['rates'] is not None:
+        for rate_info in row['rewards']['rates']:
+            if rate_info is not None and 'asset_address' in rate_info and rate_info['asset_address'].lower() == '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'.lower():
+                rate = rate_info['rewards_daily_rate']
+                break
 
     ret['rewards_daily_rate'] = rate
     book = client.get_order_book(token1)
@@ -221,6 +261,7 @@ def get_all_results(all_df, client, max_workers=5):
 
     def process_with_progress(args):
         idx, row = args
+        process_single_row(row, client)
         try:
             return process_single_row(row, client)
         except:
@@ -290,6 +331,24 @@ def add_volatility(row):
     new_dict = {**row_dict, **stats}
     return new_dict
 
+def add_zero_volatility(row):
+    row_dict = row.copy()
+
+    stats = {
+        '1_hour': 1,
+        '3_hour': 1,
+        '6_hour': 1,
+        '12_hour': 1,
+        '24_hour': 1,
+        '7_day': 1,
+        '14_day': 1,
+        '30_day': 1,
+        'volatility_price': 0.5
+    }
+
+    new_dict = {**row_dict, **stats}
+    return new_dict
+
 def add_volatility_to_df(df, max_workers=3):
     
     results = []
@@ -299,10 +358,10 @@ def add_volatility_to_df(df, max_workers=3):
         idx, row = args
         try:
             ret = add_volatility(row.to_dict())
-            return ret
         except:
+            ret = add_zero_volatility(row.to_dict())
             print("Error fetching volatility")
-            return None
+        return ret
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(process_volatility_with_progress, (idx, row)) for idx, row in df.iterrows()]
@@ -332,7 +391,7 @@ def get_markets(all_results, sel_df, maker_reward=1):
 
     making_markets = s_df[~new_df['question'].isin(sel_df['question'])]
     making_markets = making_markets.sort_values('gm_reward_per_100', ascending=False)
-    making_markets = making_markets[making_markets['gm_reward_per_100'] >= maker_reward]
+    # making_markets = making_markets[making_markets['gm_reward_per_100'] >= maker_reward]
     all_markets = get_combined_markets(new_df, making_markets, sel_df)    
 
     return all_data, all_markets

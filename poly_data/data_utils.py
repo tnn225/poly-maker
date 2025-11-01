@@ -94,28 +94,28 @@ def update_orders():
     orders = {}
 
     if len(all_orders) > 0:
-            for token in all_orders['asset_id'].unique():
-                
-                if token not in orders:
-                    orders[str(token)] = {'buy': {'price': 0, 'size': 0}, 'sell': {'price': 0, 'size': 0}}
+        for token in all_orders['asset_id'].unique():
+            
+            if token not in orders:
+                orders[str(token)] = {'buy': {'price': 0, 'size': 0}, 'sell': {'price': 0, 'size': 0}}
 
-                curr_orders = all_orders[all_orders['asset_id'] == str(token)]
-                
-                if len(curr_orders) > 0:
-                    sel_orders = {}
-                    sel_orders['buy'] = curr_orders[curr_orders['side'] == 'BUY']
-                    sel_orders['sell'] = curr_orders[curr_orders['side'] == 'SELL']
+            curr_orders = all_orders[all_orders['asset_id'] == str(token)]
+            
+            if len(curr_orders) > 0:
+                sel_orders = {}
+                sel_orders['buy'] = curr_orders[curr_orders['side'] == 'BUY']
+                sel_orders['sell'] = curr_orders[curr_orders['side'] == 'SELL']
 
-                    for type in ['buy', 'sell']:
-                        curr = sel_orders[type]
+                for type in ['buy', 'sell']:
+                    curr = sel_orders[type]
 
-                        if len(curr) > 1:
-                            print("Multiple orders found, cancelling")
-                            global_state.client.cancel_all_asset(token)
-                            orders[str(token)] = {'buy': {'price': 0, 'size': 0}, 'sell': {'price': 0, 'size': 0}}
-                        elif len(curr) == 1:
-                            orders[str(token)][type]['price'] = float(curr.iloc[0]['price'])
-                            orders[str(token)][type]['size'] = float(curr.iloc[0]['original_size'] - curr.iloc[0]['size_matched'])
+                    if len(curr) > 1:
+                        print("Multiple orders found, cancelling")
+                        global_state.client.cancel_all_asset(token)
+                        orders[str(token)] = {'buy': {'price': 0, 'size': 0}, 'sell': {'price': 0, 'size': 0}}
+                    elif len(curr) == 1:
+                        orders[str(token)][type]['price'] = float(curr.iloc[0]['price'])
+                        orders[str(token)][type]['size'] = float(curr.iloc[0]['original_size'] - curr.iloc[0]['size_matched'])
 
     print("Updated orders from API:", orders)
     global_state.orders = orders
