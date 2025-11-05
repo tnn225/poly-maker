@@ -39,11 +39,14 @@ performing_timestamps = {}
 # Timestamps for when positions were last updated
 last_trade_update = {}
 
-# Current open orders for each token
-# Format: {token_id: {'buy': {price, size}, 'sell': {price, size}}}
-orders = {}
+# Current order for each token
+# Format: order[token][buy/sell][price: float]: float
+order = {}
 
-# Current positions for each token
-# Format: {token_id: {'size': float, 'avgPrice': float}}
+# Current size for each token
+# Format: sizes[token][buy/sell][price: float]: float
+size = {} 
+
 positions = {}
 
+orders = {}
