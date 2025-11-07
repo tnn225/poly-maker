@@ -6,7 +6,7 @@ import poly_data.CONSTANTS as CONSTANTS
 from trading import perform_trade
 import time 
 import asyncio
-from poly_data.data_utils import set_position, set_order, update_positions
+from poly_data.data_utils import set_order, set_order, update_positions
 
 def is_json(myjson):
   try:
@@ -16,20 +16,22 @@ def is_json(myjson):
   return True
 
 
-def process_book_data(asset, json_data):
-    global_state.all_data[asset] = {
+def process_book_data(token, json_data):
+    print(f"Processing book data for {token}")
+    global_state.all_data[token] = {
         'bids': SortedDict(),
         'asks': SortedDict()
     }
 
-    global_state.all_data[asset]['bids'].update({float(entry['price']): float(entry['size']) for entry in json_data['bids']})
-    global_state.all_data[asset]['asks'].update({float(entry['price']): float(entry['size']) for entry in json_data['asks']})
+    global_state.all_data[token]['bids'].update({float(entry['price']): float(entry['size']) for entry in json_data['bids']})
+    global_state.all_data[token]['asks'].update({float(entry['price']): float(entry['size']) for entry in json_data['asks']})
 
-def process_price_change(asset, side, price_level, new_size):
+def process_price_change(token, side, price_level, new_size):
+    print(f"Processing price change for {token} on side {side} at price level {price_level} with new size {new_size}")
     if side == 'bids':
-        book = global_state.all_data[asset]['bids']
+        book = global_state.all_data[token]['bids']
     else:
-        book = global_state.all_data[asset]['asks']
+        book = global_state.all_data[token]['asks']
 
     if new_size == 0:
         if price_level in book:
@@ -48,7 +50,8 @@ def process_data(json_datas, trade=True):
         asset = json_data['market']
 
         if event_type == 'book':
-            process_book_data(asset, json_data)
+            token = json_data.get('asset_id', None)
+            process_book_data(token, json_data)
 
             if trade:
                 asyncio.create_task(perform_trade(asset))
@@ -58,7 +61,9 @@ def process_data(json_datas, trade=True):
                 side = 'bids' if data['side'] == 'BUY' else 'asks'
                 price_level = float(data['price'])
                 new_size = float(data['size'])
-                process_price_change(asset, side, price_level, new_size)
+                token = data['asset_id']
+
+                process_price_change(token, side, price_level, new_size)
 
                 if trade:
                     asyncio.create_task(perform_trade(asset))

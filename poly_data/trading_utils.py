@@ -1,29 +1,22 @@
 import math 
-from poly_data.data_utils import update_positions
+from poly_data.data_utils import get_order, get_size, update_positions
 import poly_data.global_state as global_state
 
-# def get_avgPrice(position, assetId):
-#     curr_global = global_state.all_positions[global_state.all_positions['asset'] == str(assetId)]
-#     api_position_size = 0
-#     api_avgPrice = 0
+def get_top_bid(token):
+    if token not in global_state.all_data:
+        return None
+    bids = global_state.all_data[token]['bids']
+    if len(bids) == 0:
+        return None
+    return list(bids.keys())[0]
 
-#     if len(curr_global) > 0:
-#         c_row = curr_global.iloc[0]
-#         api_avgPrice = round(c_row['avgPrice'], 2)
-#         api_position_size = c_row['size']
-
-#     if position > 0:
-#         if abs((api_position_size - position)/position * 100) > 5:
-#             print("Updating global positions")
-#             update_positions()
-
-#             try:
-#                 c_row = curr_global.iloc[0]
-#                 api_avgPrice = round(c_row['avgPrice'], 2)
-#                 api_position_size = c_row['size']
-#             except:
-#                 return 0
-#     return api_avgPrice
+def get_top_ask(token):
+    if token not in global_state.all_data:
+        return None
+    asks = global_state.all_data[token]['asks']
+    if len(asks) == 0:
+        return None
+    return list(asks.keys())[0]
 
 def get_best_bid_ask_deets(market, name, size, deviation_threshold=0.05):
 
@@ -195,4 +188,10 @@ def get_buy_sell_amount(position, bid_price, row, other_token_position=0):
             buy_amount = buy_amount * int(row['multiplier'])
 
     return buy_amount, sell_amount
+
+def get_size_by_token_id_price(token_id, side, price, trade_size): 
+    size = get_size(token_id, side, price)   
+    if trade_size / price > size:
+        return trade_size / price - size
+    return 0
 
