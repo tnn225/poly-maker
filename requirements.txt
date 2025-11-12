@@ -1,6 +1,8 @@
 # pip3 install -r requirements.txt
 
 py-clob-client==0.20.0
+py_order_utils==0.3.2
+
 pandas
 gspread
 gspread-dataframe
@@ -8,7 +10,7 @@ sortedcontainers
 black==24.4.2
 eth-utils===4.1.1
 poly_eip712_structs==0.0.1
-py_order_utils==0.3.2
+
 pytest==8.2.2
 # python-dotenv==0.19.2
 requests==2.32.3
@@ -24,3 +26,5 @@ setuptools>=65.5.0
 python-binance
 scipy
 websocket-client
+matplotlib
+seaborn
